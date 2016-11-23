@@ -1,0 +1,263 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
+        <title>Installing Hive and Hadoop locally</title>
+        <link rel="stylesheet" type="text/css" href="../css/default.css" />
+        <link rel="stylesheet" type="text/css" href="../css/github.css" />
+        <link rel="stylesheet" type="text/css" href="../css/old.css" />
+        <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+        <script src="../js/mathjaxConfig.js"></script>
+        
+        
+    </head>
+    <body>
+
+        <header>
+            <div class="title">Chao Sun</div>
+            <div class="navi">
+                <a href="../">Home</a>
+                <a href="../about.html">About</a>
+                <a href="../projects.html">Projects</a>
+                <a href="../archive.html">Archive</a>
+            </div>
+            <a href="https://www.linkedin.com/in/chao-sun-68b27121"><div class="bird"></div></a>
+        </header>
+
+        <div class="title">
+            <h1>Installing Hive and Hadoop locally</h1>
+            
+        </div>
+
+        
+        <div class="info">
+            Posted on November 13, 2016
+            
+                by Chao Sun
+            
+        </div>
+        
+
+        <div id="content">
+            <div class="main-text">
+    <p>Recently, I got a new laptop and therefore needed to do a fresh installation for Hive and Hadoop. There are quite a few steps along the way. Here’s my recordings:</p>
+
+<h2 id="setup-ssh">Setup SSH</h2>
+
+<div class="highlight"><pre><span></span>ssh-keygen -t rsa -P <span class="s2">&quot;&quot;</span>
+cat ~/.ssh/id_rsa.pub &gt;&gt; ~/.ssh/authorized_keys
+</pre></div>
+
+
+<p>However, I’ve already have an key pair that is associated with a password. To avoid overwriting the key, I need to generate a separate key pair and use that to access <code>localhost</code>:</p>
+
+<div class="highlight"><pre><span></span>$ ssh-keygen -t rsa
+Generating public/private rsa key pair.
+Enter file in which to save the key <span class="o">(</span>/Users/chao/.ssh/id_rsa<span class="o">)</span>: /Users/chao/.ssh/id_rsa_local
+...
+$ cat ~/.ssh/id_rsa_local.pub &gt;&gt; ~/.ssh/authorized_keys
+</pre></div>
+
+
+<p>Then, add (or create the file if it doesn’t exist) this to the ~/.ssh/config:</p>
+
+
+
+<p>This tells SSH to use the key <code>id_rsa_local</code> when accessing localhost, or <code>0.0.0.0</code>. This is necessary to start a one-node Hadoop cluster.</p>
+
+<p>With this, now try:</p>
+
+<div class="highlight"><pre><span></span>ssh localhost
+</pre></div>
+
+
+<p>It should succeed.</p>
+
+<h2 id="install-hadoop-package">Install Hadoop package</h2>
+
+<p>For this step, you’ll need to download the Hadoop package and setup some configuration files. For me, I use CDH 5.4.x Hadoop version from <a href="http://www.cloudera.com/documentation/enterprise/release-notes/topics/cdh_vd_cdh_package_tarball_54.html#topic_3" title>here</a>. After the downloading is finished, uncompress the file and put it in a proper location (e.g., /opt). Then, add the following to your <code>.bash_profile</code>:</p>
+
+<div class="highlight"><pre><span></span><span class="nb">export</span> <span class="nv">HADOOP_CLASSPATH</span><span class="o">=</span>
+<span class="nb">export</span> <span class="nv">HADOOP_HEAPSIZE</span><span class="o">=</span>2000
+<span class="nb">export</span> <span class="nv">HADOOP_HOME</span><span class="o">=</span>/path/to/hadoop/dir
+<span class="nb">export</span> <span class="nv">PATH</span><span class="o">=</span><span class="nv">$HADOOP_HOME</span>/sbin:<span class="nv">$HADOOP_HOME</span>/bin:<span class="nv">$PATH</span>
+</pre></div>
+
+
+<p>Also, you’ll need to add configs to a few files under <code>$HADOOP_HOME/etc/hadoop</code>:</p>
+
+<ol>
+<li><p>core-site.xml:</p>
+
+<div class="highlight"><pre><span></span><span class="nt">&lt;property&gt;</span>
+  <span class="nt">&lt;name&gt;</span>fs.defaultFS<span class="nt">&lt;/name&gt;</span>
+  <span class="nt">&lt;value&gt;</span>hdfs://localhost:9000<span class="nt">&lt;/value&gt;</span>
+<span class="nt">&lt;/property&gt;</span>
+</pre></div>
+</li>
+<li><p>hdfs-site.xml</p>
+
+<div class="highlight"><pre><span></span><span class="nt">&lt;property&gt;</span>
+  <span class="nt">&lt;name&gt;</span>dfs.replication<span class="nt">&lt;/name&gt;</span>
+  <span class="nt">&lt;value&gt;</span>1<span class="nt">&lt;/value&gt;</span>
+<span class="nt">&lt;/property&gt;</span>
+<span class="nt">&lt;property&gt;</span>
+  <span class="nt">&lt;name&gt;</span>dfs.namenode.name.dir<span class="nt">&lt;/name&gt;</span>
+  <span class="nt">&lt;value&gt;</span>/path/to/namenode/dir<span class="nt">&lt;/value&gt;</span>
+<span class="nt">&lt;/property&gt;</span>
+<span class="nt">&lt;property&gt;</span>
+  <span class="nt">&lt;name&gt;</span>dfs.datanode.data.dir<span class="nt">&lt;/name&gt;</span>
+  <span class="nt">&lt;value&gt;</span>/path/to/datanode/dir<span class="nt">&lt;/value&gt;</span>
+<span class="nt">&lt;/property&gt;</span>
+</pre></div>
+</li>
+<li><p>mapred-site.xml</p>
+
+<div class="highlight"><pre><span></span><span class="nt">&lt;property&gt;</span>
+  <span class="nt">&lt;name&gt;</span>mapreduce.framework.name<span class="nt">&lt;/name&gt;</span>
+  <span class="nt">&lt;value&gt;</span>yarn<span class="nt">&lt;/value&gt;</span>
+<span class="nt">&lt;/property&gt;</span>
+</pre></div>
+</li>
+<li><p>yarn-site.xml</p>
+
+<div class="highlight"><pre><span></span><span class="nt">&lt;property&gt;</span>
+  <span class="nt">&lt;name&gt;</span>yarn.nodemanager.aux-services<span class="nt">&lt;/name&gt;</span>
+  <span class="nt">&lt;value&gt;</span>mapreduce_shuffle<span class="nt">&lt;/value&gt;</span>
+<span class="nt">&lt;/property&gt;</span>
+</pre></div>
+</li>
+</ol>
+
+<p>For the 2), you’ll need to specify a dir. I use a <code>.hadoop</code> dir under my home directory, and have dirs <code>datanode</code> and <code>namenode</code> under it.</p>
+
+<p>Also, (at least for CDH 5.4.x) there’s a bug in <code>$HADOOP_HOME/libexec/hadoop-conf.sh</code>, which will result Yarn to use the hardcoded <code>/bin/java</code>, instead of <code>/usr/bin/java</code>. This can be fixed by following the comments in <a href="https://issues.apache.org/jira/browse/HADOOP-8717" title>this JIRA</a>.</p>
+
+<p>Now, you should be able to start hdfs and yarn by:</p>
+
+<div class="highlight"><pre><span></span>start-dfs.sh
+start-yarn.sh
+</pre></div>
+
+
+<p>Check whether the services are started by using <code>jps</code>. You should see something like the following:</p>
+
+<div class="highlight"><pre><span></span><span class="m">3296</span> NodeManager
+<span class="m">3111</span> SecondaryNameNode
+<span class="m">3017</span> DataNode
+<span class="m">3210</span> ResourceManager
+<span class="m">2943</span> NameNode
+</pre></div>
+
+
+<p>If the NameNode doesn’t start. You should check whether the <code>datanode</code> and <code>namenode</code> dirs have been created yet. Also, you can try</p>
+
+<div class="highlight"><pre><span></span>hadoop namenode -format
+</pre></div>
+
+
+<p>to reformat the namenode dir.</p>
+
+<h2 id="install-mysql">Install MySQL</h2>
+
+<p>On Mac, MySQL can be installed via Homebrew. Simply use the following command:</p>
+
+<div class="highlight"><pre><span></span>brew install mysql
+</pre></div>
+
+
+<p>After this, you can start MySQL server by:</p>
+
+<div class="highlight"><pre><span></span>mysql.server restart
+</pre></div>
+
+
+<p>Next, you’ll need to create a user for Hive. Go to MySQL CLI:</p>
+
+
+
+<p>and type:</p>
+
+<div class="highlight"><pre><span></span>&gt; CREATE DATABASE metastore<span class="p">;</span>
+&gt; CREATE USER <span class="s1">'hive'</span>@<span class="s1">'localhost'</span> IDENTIFIED BY <span class="s1">'some_pass'</span><span class="p">;</span>
+&gt; USE metastore<span class="p">;</span>
+&gt; GRANT ALL ON *.* TO <span class="s1">'hive'</span>@<span class="s1">'localhost'</span> IDENTIFIED BY <span class="s1">'some_pass'</span><span class="p">;</span>
+</pre></div>
+
+
+<p>After installing the MySql database. You’ll need to run:</p>
+
+<div class="highlight"><pre><span></span>bin/schematool -dbType mysql -initSchema
+</pre></div>
+
+
+<p>to initialize the database for Hive usage. Note that you only need to run this ONCE at the beginning.</p>
+
+<h2 id="install-hive">Install Hive</h2>
+
+<p>First, you can clone the Hive repository <a href="https://github.com/apache/hive" title>here</a>. Then, suppose you put the Hive repo under <code>$HOME/git/hive</code>, to build Hive, do:</p>
+
+<div class="highlight"><pre><span></span>mvn clean install -DskipTests -Phadoop-2
+</pre></div>
+
+
+<p>(Note that for upstream Hive the <code>-Phadoop-2</code> flag is no longer necessary).</p>
+
+<p>You also need to set <code>$HIVE_HOME</code> env variable. For this I usually set it to the path under: <code>$HOME/git/hive/packaging/target/$HIVE_VERSION-bin/$HIVE_VERSION-bin</code>, where <code>$HIVE_VERSION</code> is the version of Hive you’re using. For instance: <code>apache-hive-1.1.0-cdh5.4.7</code>.</p>
+
+<p>Also remember to add <code>$HIVE_HOME/bin</code> to your <code>$PATH</code>.</p>
+
+<p>Ther eare a few Hive configurations that need to be changed. First, in <code>$HIVE_HOME/conf/hive-site.xml</code>, you should have at least the following:</p>
+
+<div class="highlight"><pre><span></span><span class="nt">&lt;name&gt;</span>javax.jdo.option.ConnectionURL<span class="nt">&lt;/name&gt;</span>
+  <span class="c">&lt;!-- useSSL to false to avoid warning messages --&gt;</span>
+  <span class="nt">&lt;value&gt;</span>jdbc:mysql://localhost/metastore?useSSL=false<span class="nt">&lt;/value&gt;</span>
+<span class="nt">&lt;/property&gt;</span>
+
+<span class="nt">&lt;property&gt;</span>
+  <span class="nt">&lt;name&gt;</span>javax.jdo.option.ConnectionDriverName<span class="nt">&lt;/name&gt;</span>
+  <span class="nt">&lt;value&gt;</span>com.mysql.jdbc.Driver<span class="nt">&lt;/value&gt;</span>
+<span class="nt">&lt;/property&gt;</span>
+</pre></div>
+
+
+<p>which tells Hive to use MySql as underlying meta DB and the <code>metastore</code> is the database to access.</p>
+
+<p>To launch Hive, first you’ll need to start the MySQL server:</p>
+
+<div class="highlight"><pre><span></span>mysql.server start
+</pre></div>
+
+
+<p>To start HiveMetastore, do:</p>
+
+<div class="highlight"><pre><span></span>hive --service metastore <span class="p">&amp;</span>&gt; /tmp/hive/metastore.log <span class="p">&amp;</span>
+</pre></div>
+
+
+<p>To start HiveServer2, do:</p>
+
+<div class="highlight"><pre><span></span>hive --service hiveserver2 <span class="p">&amp;</span>&gt; /tmp/hive/hiveserver2.log <span class="p">&amp;</span>
+</pre></div>
+
+
+<p>Then you can launch Beeline and connect to localhost on port <code>10000</code>, like normal.</p>
+</div>
+        </div>
+
+        
+
+        <div id="footer">
+            <span class="left"><a href="//github.com/sunchao/sunchao.github.io">Source</a>
+            on Github</span>
+
+            Site proudly generated by
+            <a href="http://jaspervdj.be/hakyll">Hakyll</a>
+            and credits to <a href="http://mattwetmore.me">Matt Wetmore</a>
+            for the blog template
+        </div>
+        <script src="../js/sidenote.js"></script>
+    </body>
+</html>

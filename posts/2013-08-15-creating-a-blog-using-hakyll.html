@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
+        <title>Creating a Blog Using Hakyll</title>
+        <link rel="stylesheet" type="text/css" href="../css/default.css" />
+        <link rel="stylesheet" type="text/css" href="../css/github.css" />
+        <link rel="stylesheet" type="text/css" href="../css/old.css" />
+        <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+        <script src="../js/mathjaxConfig.js"></script>
+        
+        
+    </head>
+    <body>
+
+        <header>
+            <div class="title">Chao Sun</div>
+            <div class="navi">
+                <a href="../">Home</a>
+                <a href="../about.html">About</a>
+                <a href="../projects.html">Projects</a>
+                <a href="../archive.html">Archive</a>
+            </div>
+            <a href="https://www.linkedin.com/in/chao-sun-68b27121"><div class="bird"></div></a>
+        </header>
+
+        <div class="title">
+            <h1>Creating a Blog Using Hakyll</h1>
+            
+        </div>
+
+        
+        <div class="info">
+            Posted on August 15, 2013
+            
+                by Chao Sun
+            
+        </div>
+        
+
+        <div id="content">
+            <div class="main-text">
+    <h3 id="introduction">Introduction</h3>
+
+<p><a href="http://jaspervdj.be/hakyll/" title>Hakyll</a> is a great library for generating static sites, like <a href="http://jekyllrb.com/" title>Jekyll</a>, but uses <a href="http://www.haskell.org/haskellwiki/Haskell" title>Haskell</a>. Being a newbie on Haskell (just finished the famous <a href="http://book.realworldhaskell.org/" title>Real World Haskell</a> book, and had planned to create a blog for a long time, I decided to give it a go.</p>
+
+<h3 id="installation">Installation</h3>
+
+<p>There are detailed instructions on the <a href="http://jaspervdj.be/hakyll/tutorials/01-installation.html" title>website</a>. First, assuming you have <a href="http://www.haskell.org/cabal/" title>cabal</a> installed on your computer, then open a terminal and do the following:</p>
+
+
+
+<p>This will also install <a href="http://johnmacfarlane.net/pandoc/" title>Pandoc</a>, if it is not already on your computer. Pandoc is another great library for converting files of different makeup formats. Hakyll uses pandoc to convert different markup format, like <a href="http://daringfireball.net/projects/markdown/" title>Markdown</a>, <a href="http://orgmode.org/" title>Org mode for Emacs</a>, <a href="http://www.latex-project.org/" title>Latex</a>, etc., to HTML format.</p>
+
+<p>Then, you can follow instructions on the website to create a sample website and see what it looks like. Later on, after you get more familier with the tool, you can change the look-and-feel of the website by change css and template files.</p>
+
+<p>I made only small changes based on the example template. First, I uses the <a href="http://thomasf.github.io/solarized-css" title>Solarized CSS</a> theme. For this it is pretty simple, you just download the file and put it in css directory. Also, you need to add a line to <code>templates/default.html</code>.</p>
+
+<h3 id="tags">Tags</h3>
+
+<p>Another change I made is adding tags support. For this, you need to modify <code>site.hs</code> (or whatever you name it).</p>
+
+<p>First, you need add a <code>tags</code> field:</p>
+
+<div class="highlight"><pre><span></span><span class="nf">postCtx</span> <span class="ow">::</span> <span class="kt">Tags</span> <span class="ow">-&gt;</span> <span class="kt">Context</span> <span class="kt">String</span>
+<span class="nf">postCtx</span> <span class="n">tags</span> <span class="ow">=</span>
+  <span class="n">dateField</span> <span class="s">&quot;date&quot;</span> <span class="s">&quot;%B %e, %Y&quot;</span> <span class="o">&lt;&gt;</span>
+  <span class="n">tagsField</span> <span class="s">&quot;tags&quot;</span> <span class="n">tags</span> <span class="o">&lt;&gt;</span>
+  <span class="n">defaultContext</span>
+</pre></div>
+
+
+<p>This enables you to specify tags for each post.</p>
+
+<p>Then, we can create a page listing all posts under a particular tag:</p>
+
+<div class="highlight"><pre><span></span><span class="nf">tagsRules</span> <span class="n">tags</span> <span class="o">$</span> <span class="nf">\</span><span class="n">tag</span> <span class="n">pattern</span> <span class="ow">-&gt;</span> <span class="kr">do</span>
+    <span class="kr">let</span> <span class="n">title</span> <span class="ow">=</span> <span class="s">&quot;Posts tagged &quot;</span> <span class="o">++</span> <span class="n">tag</span>
+
+    <span class="n">route</span> <span class="n">idRoute</span>
+    <span class="n">compile</span> <span class="o">$</span> <span class="kr">do</span>
+        <span class="n">posts</span> <span class="ow">&lt;-</span> <span class="n">recentFirst</span> <span class="o">=&lt;&lt;</span> <span class="n">loadAll</span> <span class="n">pattern</span>
+        <span class="kr">let</span> <span class="n">ctx</span> <span class="ow">=</span> <span class="n">constField</span> <span class="s">&quot;title&quot;</span> <span class="n">title</span> <span class="o">&lt;&gt;</span>
+                    <span class="n">listField</span> <span class="s">&quot;posts&quot;</span> <span class="p">(</span><span class="n">postCtx</span> <span class="n">tags</span><span class="p">)</span> <span class="p">(</span><span class="n">return</span> <span class="n">posts</span><span class="p">)</span> <span class="o">&lt;&gt;</span>
+                    <span class="n">defaultContext</span>
+        <span class="n">makeItem</span> <span class="s">&quot;&quot;</span>
+            <span class="o">&gt;&gt;=</span> <span class="n">loadAndApplyTemplate</span> <span class="s">&quot;templates/archive.html&quot;</span> <span class="n">ctx</span>
+            <span class="o">&gt;&gt;=</span> <span class="n">loadAndApplyTemplate</span> <span class="s">&quot;templates/default.html&quot;</span> <span class="n">ctx</span>
+            <span class="o">&gt;&gt;=</span> <span class="n">relativizeUrls</span>
+</pre></div>
+
+
+<p>The above code uses the layout specified in <code>templates/archive.html</code> and <code>templates/default.html</code>. It is similar to how <code>archive.html</code> is generated.</p>
+
+<p>Finally, we need to parse tags in all posts and generate corresponding pages for each of them. This can be done in one line:</p>
+
+<div class="highlight"><pre><span></span><span class="nf">tags</span> <span class="ow">&lt;-</span> <span class="n">buildTags</span> <span class="s">&quot;posts/*&quot;</span> <span class="p">(</span><span class="n">fromCapture</span> <span class="s">&quot;tags/*.html&quot;</span><span class="p">)</span>
+</pre></div>
+
+
+<p>Now, you can put <code>$tags$</code> in your page (for example, <code>index.html</code>), and check out the effect.</p>
+
+<h3 id="github">Github</h3>
+
+<p>One final goal is to put the website on github. This is pretty simple, you only need to create a git repository under <code>_site</code> directory, and add your github page URL as a remote origin. Notice that, if you also uses git for the outer directory of <code>_site</code>, you need to put <code>_site</code> in <code>.gitignore</code>.</p>
+</div>
+        </div>
+
+        
+
+        <div id="footer">
+            <span class="left"><a href="//github.com/sunchao/sunchao.github.io">Source</a>
+            on Github</span>
+
+            Site proudly generated by
+            <a href="http://jaspervdj.be/hakyll">Hakyll</a>
+            and credits to <a href="http://mattwetmore.me">Matt Wetmore</a>
+            for the blog template
+        </div>
+        <script src="../js/sidenote.js"></script>
+    </body>
+</html>

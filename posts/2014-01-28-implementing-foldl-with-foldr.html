@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
+        <title>Implementing foldl with foldr</title>
+        <link rel="stylesheet" type="text/css" href="../css/default.css" />
+        <link rel="stylesheet" type="text/css" href="../css/github.css" />
+        <link rel="stylesheet" type="text/css" href="../css/old.css" />
+        <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+        <script src="../js/mathjaxConfig.js"></script>
+        
+        
+    </head>
+    <body>
+
+        <header>
+            <div class="title">Chao Sun</div>
+            <div class="navi">
+                <a href="../">Home</a>
+                <a href="../about.html">About</a>
+                <a href="../projects.html">Projects</a>
+                <a href="../archive.html">Archive</a>
+            </div>
+            <a href="https://www.linkedin.com/in/chao-sun-68b27121"><div class="bird"></div></a>
+        </header>
+
+        <div class="title">
+            <h1>Implementing foldl with foldr</h1>
+            
+        </div>
+
+        
+        <div class="info">
+            Posted on January 28, 2014
+            
+                by Chao
+            
+        </div>
+        
+
+        <div id="content">
+            <div class="main-text">
+    <h3 id="introduction">Introduction</h3>
+
+<div class="sidenote"><ol start="1"><li id="sn1"><div><p>This course is super great. I highly recommend it to new Haskellers.</p></div></li></ol></div><p>Recently I am following an introductory course for Haskell: <a href="http://www.seas.upenn.edu/~cis194/" title>CIS 194</a> <a id="fnref1" class="fnref" href="#fn1"><sup>1</sup></a> at UPenn. While doing the assignments, I came up with this problem: <strong>define foldl using foldr</strong>.</p>
+
+<p>After spent about half an hour trying to figure this out, I was left frustrated. Then, I searched on Haskell wiki and found the answer, which is this small piece of code:</p>
+
+<div class="highlight"><pre><span></span><span class="nf">foldl</span> <span class="ow">::</span> <span class="p">(</span><span class="n">a</span> <span class="ow">-&gt;</span> <span class="n">b</span> <span class="ow">-&gt;</span> <span class="n">a</span><span class="p">)</span> <span class="ow">-&gt;</span> <span class="n">a</span> <span class="ow">-&gt;</span> <span class="p">[</span><span class="n">b</span><span class="p">]</span> <span class="ow">-&gt;</span> <span class="n">a</span>
+<span class="nf">foldl</span> <span class="n">f</span> <span class="n">a</span> <span class="n">bs</span> <span class="ow">=</span>
+    <span class="n">foldr</span> <span class="p">(</span><span class="nf">\</span><span class="n">b</span> <span class="n">g</span> <span class="n">x</span> <span class="ow">-&gt;</span> <span class="n">g</span> <span class="p">(</span><span class="n">f</span> <span class="n">x</span> <span class="n">b</span><span class="p">))</span> <span class="n">id</span> <span class="n">bs</span> <span class="n">a</span>
+</pre></div>
+
+
+<p>How to interpret this code? Let’s run a small example with the code. For brevity, we denote the function <code>(\b g x -&gt; g (f x b))</code> with <code>w</code> in below:</p>
+
+<div class="highlight"><pre><span></span><span class="nf">foldl</span> <span class="p">(</span><span class="o">+</span><span class="p">)</span> <span class="mi">0</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">]</span> <span class="ow">=&gt;</span>
+    <span class="p">(</span><span class="n">w</span> <span class="mi">1</span> <span class="p">(</span><span class="n">w</span> <span class="mi">2</span> <span class="p">(</span><span class="n">w</span> <span class="mi">3</span> <span class="n">id</span><span class="p">)))</span> <span class="mi">0</span> <span class="ow">=&gt;</span>
+    <span class="p">(</span><span class="n">w</span> <span class="mi">1</span> <span class="p">(</span><span class="n">w</span> <span class="mi">2</span> <span class="p">((</span><span class="nf">\</span><span class="n">b</span> <span class="n">g</span> <span class="n">x</span> <span class="ow">-&gt;</span> <span class="n">g</span> <span class="p">(</span><span class="n">f</span> <span class="n">x</span> <span class="n">b</span><span class="p">))</span> <span class="mi">3</span> <span class="n">id</span><span class="p">)))</span> <span class="mi">0</span> <span class="ow">=&gt;</span>
+    <span class="p">(</span><span class="n">w</span> <span class="mi">1</span> <span class="p">(</span><span class="n">w</span> <span class="mi">2</span> <span class="p">(</span><span class="nf">\</span><span class="n">x</span> <span class="ow">-&gt;</span> <span class="n">id</span> <span class="p">((</span><span class="o">+</span><span class="p">)</span> <span class="n">x</span> <span class="mi">3</span><span class="p">))))</span> <span class="mi">0</span> <span class="ow">=&gt;</span>
+    <span class="p">(</span><span class="n">w</span> <span class="mi">1</span> <span class="p">(</span><span class="n">w</span> <span class="mi">2</span> <span class="p">(</span><span class="nf">\</span><span class="n">x</span> <span class="ow">-&gt;</span> <span class="p">(</span><span class="o">+</span><span class="p">)</span> <span class="n">x</span> <span class="mi">3</span><span class="p">)))</span> <span class="mi">0</span> <span class="ow">=&gt;</span>
+    <span class="p">(</span><span class="n">w</span> <span class="mi">1</span> <span class="p">((</span><span class="nf">\</span><span class="n">b</span> <span class="n">g</span> <span class="n">x</span> <span class="ow">-&gt;</span> <span class="n">g</span> <span class="p">(</span><span class="n">f</span> <span class="n">x</span> <span class="n">b</span><span class="p">))</span> <span class="mi">2</span> <span class="p">(</span><span class="nf">\</span><span class="n">y</span> <span class="ow">-&gt;</span> <span class="p">(</span><span class="o">+</span><span class="p">)</span> <span class="n">y</span> <span class="mi">3</span><span class="p">)))</span> <span class="mi">0</span> <span class="ow">=&gt;</span>
+    <span class="p">(</span><span class="n">w</span> <span class="mi">1</span> <span class="p">(</span><span class="nf">\</span><span class="n">x</span> <span class="p">(</span><span class="nf">\</span><span class="n">y</span> <span class="ow">-&gt;</span> <span class="p">(</span><span class="o">+</span><span class="p">)</span> <span class="n">y</span> <span class="mi">3</span><span class="p">)</span> <span class="p">((</span><span class="o">+</span><span class="p">)</span> <span class="n">x</span> <span class="mi">2</span><span class="p">)))</span> <span class="mi">0</span> <span class="ow">=&gt;</span>
+    <span class="p">(</span><span class="n">w</span> <span class="mi">1</span> <span class="p">(</span><span class="nf">\</span><span class="n">x</span> <span class="p">((</span><span class="o">+</span><span class="p">)</span> <span class="p">((</span><span class="o">+</span><span class="p">)</span> <span class="n">x</span> <span class="mi">2</span><span class="p">)</span> <span class="mi">3</span><span class="p">)))</span> <span class="mi">0</span> <span class="ow">=&gt;</span>
+    <span class="p">((</span><span class="nf">\</span><span class="n">b</span> <span class="n">g</span> <span class="n">x</span> <span class="ow">-&gt;</span> <span class="n">g</span> <span class="p">(</span><span class="n">f</span> <span class="n">x</span> <span class="n">b</span><span class="p">))</span> <span class="p">(</span><span class="nf">\</span><span class="n">y</span> <span class="p">((</span><span class="o">+</span><span class="p">)</span> <span class="p">((</span><span class="o">+</span><span class="p">)</span> <span class="n">y</span> <span class="mi">2</span><span class="p">)</span> <span class="mi">3</span><span class="p">))</span> <span class="mi">1</span><span class="p">)</span> <span class="mi">0</span> <span class="ow">=&gt;</span>
+    <span class="p">(</span><span class="nf">\</span><span class="n">x</span> <span class="p">(</span><span class="nf">\</span><span class="n">y</span> <span class="p">((</span><span class="o">+</span><span class="p">)</span> <span class="p">((</span><span class="o">+</span><span class="p">)</span> <span class="n">y</span> <span class="mi">2</span><span class="p">)</span> <span class="mi">3</span><span class="p">))</span> <span class="p">((</span><span class="o">+</span><span class="p">)</span> <span class="n">x</span> <span class="mi">1</span><span class="p">))</span> <span class="mi">0</span> <span class="ow">=&gt;</span>
+    <span class="p">(</span><span class="nf">\</span><span class="n">x</span> <span class="p">((</span><span class="o">+</span><span class="p">)</span> <span class="p">((</span><span class="o">+</span><span class="p">)</span> <span class="p">((</span><span class="o">+</span><span class="p">)</span> <span class="n">x</span> <span class="mi">1</span><span class="p">)</span> <span class="mi">2</span><span class="p">)</span> <span class="mi">3</span><span class="p">))</span> <span class="mi">0</span> <span class="ow">=&gt;</span>
+    <span class="p">((</span><span class="o">+</span><span class="p">)</span> <span class="p">((</span><span class="o">+</span><span class="p">)</span> <span class="p">((</span><span class="o">+</span><span class="p">)</span> <span class="mi">0</span> <span class="mi">1</span><span class="p">)</span> <span class="mi">2</span><span class="p">)</span> <span class="mi">3</span><span class="p">)</span> <span class="ow">=&gt;</span>
+    <span class="p">((</span><span class="o">+</span><span class="p">)</span> <span class="p">((</span><span class="o">+</span><span class="p">)</span> <span class="mi">1</span> <span class="mi">2</span><span class="p">)</span> <span class="mi">3</span><span class="p">)</span> <span class="ow">=&gt;</span>
+    <span class="p">((</span><span class="o">+</span><span class="p">)</span> <span class="mi">3</span> <span class="mi">3</span><span class="p">)</span> <span class="ow">=&gt;</span>
+    <span class="mi">6</span>
+</pre></div>
+
+
+<p>Magical, isn’t it?</p>
+
+<p>In my opinion, the key here is <code>g</code>, which &ldquo;saves&rdquo; the results from <code>foldr</code> and insert them as argument for function <code>f</code>, so that they will be used in reverse order.</p>
+<ol class="footnotes">
+<li id="fn1"><p>This course is super great. I highly recommend it to new Haskellers. <a href="#fnref1" class="fnref">↩</a></p></li>
+</ol>
+</div>
+        </div>
+
+        
+        <div class="comments">
+        <h2>Comments</h2>
+        <div id="disqus_thread"></div>
+        </div>
+        <script type="text/javascript">
+            /* * * CONFIGURATION VARIABLES * * */
+            var disqus_shortname = 'sunchao';
+            var disqus_identifier = '/posts/2014-01-28-implementing-foldl-with-foldr.html';
+            var disqus_url = 'http://sunchao.github.io' + '/posts/2014-01-28-implementing-foldl-with-foldr.html';
+            var disqus_title = 'Implementing foldl with foldr';
+            (function() {
+                var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+                dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+                (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+            })();
+        </script>
+        <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
+        
+
+        <div id="footer">
+            <span class="left"><a href="//github.com/sunchao/sunchao.github.io">Source</a>
+            on Github</span>
+
+            Site proudly generated by
+            <a href="http://jaspervdj.be/hakyll">Hakyll</a>
+            and credits to <a href="http://mattwetmore.me">Matt Wetmore</a>
+            for the blog template
+        </div>
+        <script src="../js/sidenote.js"></script>
+    </body>
+</html>
